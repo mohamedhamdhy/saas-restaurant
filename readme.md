@@ -1222,4 +1222,4 @@ For support, email support - mohamedalhamdhy@gmail.com.
 
 ---
 
-**Made with ❤️ by Your Team**
+**Made with ❤️ by Mohamed Al Hamdhy**
