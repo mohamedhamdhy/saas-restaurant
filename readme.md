@@ -1192,7 +1192,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 👥 Authors
 
-- **Your Name** - *Initial work* - [YourGithub](https://github.com/yourusername)
+- **Mohamed Al Hamdhy** - *Initial work* - [YourGithub](https://github.com/mohamedhamdhy)
 
 ## 🙏 Acknowledgments
 
@@ -1203,7 +1203,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-For support, email support@restaurant-saas.com or join our Slack channel.
+For support, email support - mohamedalhamdhy@gmail.com.
 
 ## 🗺️ Roadmap
 
