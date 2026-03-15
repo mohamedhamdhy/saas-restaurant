@@ -26,13 +26,11 @@ const userRoutes = (controller, authenticate) => {
   );
 
   router.post("/auth/login", validate(loginSchema), controller.handleLogin);
-
   router.post(
     "/auth/refresh",
     validate(refreshTokenSchema),
     controller.handleRefreshToken,
   );
-
   router.post("/auth/logout", authenticate, controller.handleLogout);
 
   router.post(
@@ -65,6 +63,13 @@ const userRoutes = (controller, authenticate) => {
     authenticate,
     validate(changePasswordSchema),
     controller.handleChangePassword,
+  );
+
+  router.delete(
+    "/users/:id",
+    authenticate,
+    authorize("superAdmin", "admin"),
+    controller.handleDeleteUser,
   );
 
   return router;

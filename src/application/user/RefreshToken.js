@@ -37,11 +37,7 @@ class RefreshToken {
       );
     }
 
-    const tokenPayload = {
-      sub: user.id,
-      role: user.role,
-      restaurantId: user.restaurantId,
-    };
+    const tokenPayload = user.toTokenPayload();
 
     const newAccessToken = generateAccessToken(tokenPayload);
     const newRefreshToken = generateRefreshToken({ sub: user.id });

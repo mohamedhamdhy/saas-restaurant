@@ -38,6 +38,7 @@ const createUserSchema = Joi.object({
       "any.only": `Role must be one of: ${Object.values(UserRole).join(", ")}`,
     }),
   restaurantId: uuid.optional().allow(null),
+  branchId: uuid.optional().allow(null),
 });
 
 const loginSchema = Joi.object({
@@ -53,7 +54,6 @@ const updateProfileSchema = Joi.object({
   firstName: Joi.string().min(2).max(100).trim(),
   lastName: Joi.string().min(2).max(100).trim(),
   phone,
-  role: Joi.string().valid(...Object.values(UserRole)),
   status: Joi.string().valid("active", "inactive", "suspended", "pending"),
 })
   .min(1)
@@ -66,6 +66,7 @@ const changePasswordSchema = Joi.object({
 
 const listUsersSchema = Joi.object({
   restaurantId: uuid.optional(),
+  branchId: uuid.optional(),
   role: Joi.string()
     .valid(...Object.values(UserRole))
     .optional(),

@@ -4,11 +4,15 @@ const { createContainer, asClass, asValue, InjectionMode } = require("awilix");
 
 const { sequelize } = require("./database/Connection");
 const redisClient = require("./cache/RedisClient");
+
+require("./database/models/Index");
+
 const UserRepository = require("./repositories/UserRepository");
 const TokenRepository = require("./repositories/TokenRepository");
 const OtpRepository = require("./repositories/OtpRepository");
 const RestaurantRepository = require("./repositories/RestaurantRepository");
 const BranchRepository = require("./repositories/BranchRepository");
+const UserRoleRepository = require("./repositories/UserRoleRepository");
 const RegisterFirstSuperAdmin = require("../application/user/RegisterFirstSuperAdmin");
 const CreateUser = require("../application/user/CreateUser");
 const LoginUser = require("../application/user/LoginUser");
@@ -18,6 +22,8 @@ const GetUserProfile = require("../application/user/GetUserProfile");
 const UpdateUserProfile = require("../application/user/UpdateUserProfile");
 const ChangePassword = require("../application/user/ChangePassword");
 const ListUsers = require("../application/user/ListUsers");
+const DeleteUser = require("../application/user/DeleteUser");
+const AssignRole = require("../application/user/AssignRole");
 const SendOtp = require("../application/otp/SendOtp");
 const VerifyRegistrationOtp = require("../application/otp/VerifyRegistrationOtp");
 const VerifyLoginOtp = require("../application/otp/VerifyLoginOtp");
@@ -47,11 +53,13 @@ const container = createContainer({ injectionMode: InjectionMode.PROXY });
 container.register({
   sequelize: asValue(sequelize),
   redisClient: asValue(redisClient),
+
   userRepository: asClass(UserRepository).singleton(),
   tokenRepository: asClass(TokenRepository).singleton(),
   otpRepository: asClass(OtpRepository).singleton(),
   restaurantRepository: asClass(RestaurantRepository).singleton(),
   branchRepository: asClass(BranchRepository).singleton(),
+  userRoleRepository: asClass(UserRoleRepository).singleton(),
   registerFirstSuperAdmin: asClass(RegisterFirstSuperAdmin).singleton(),
   createUser: asClass(CreateUser).singleton(),
   loginUser: asClass(LoginUser).singleton(),
@@ -61,6 +69,8 @@ container.register({
   updateUserProfile: asClass(UpdateUserProfile).singleton(),
   changePassword: asClass(ChangePassword).singleton(),
   listUsers: asClass(ListUsers).singleton(),
+  deleteUser: asClass(DeleteUser).singleton(),
+  assignRole: asClass(AssignRole).singleton(),
   sendOtp: asClass(SendOtp).singleton(),
   verifyRegistrationOtp: asClass(VerifyRegistrationOtp).singleton(),
   verifyLoginOtp: asClass(VerifyLoginOtp).singleton(),

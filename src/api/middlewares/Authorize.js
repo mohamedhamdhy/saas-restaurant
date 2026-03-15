@@ -10,10 +10,13 @@ const authorize =
       return next(new AppError("Not authenticated.", 401, CODES.UNAUTHORIZED));
     }
 
-    if (!allowedRoles.includes(req.actor.role)) {
+    const userRoles = req.actor.roles.map((r) => r.role);
+    const hasRole = allowedRoles.some((r) => userRoles.includes(r));
+
+    if (!hasRole) {
       return next(
         new AppError(
-          `Access denied. Required roles: ${allowedRoles.join(", ")}.`,
+          `Access denied. Required: ${allowedRoles.join(", ")}.`,
           403,
           CODES.FORBIDDEN,
         ),

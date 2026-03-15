@@ -1,108 +1,130 @@
-"use strict";
+'use strict';
 
-const IUserRepository = require("../../domain/interfaces/IUserRepository");
-const User = require("../../domain/entities/User");
-const UserModel = require("../database/models/UserModel");
+const IUserRepository              = require('../../domain/interfaces/IUserRepository');
+const { UserModel, UserRoleModel } = require('../database/models/Index');
+
+const WITH_ROLES = {
+  include: [{
+    model: UserRoleModel,
+    as:    'UserRoles',
+  }],
+};
 
 class UserRepository extends IUserRepository {
+
   #toEntity(model) {
     if (!model) return null;
-    return new User(model.toEntity());
+    return model.toEntity();
   }
 
   async findById(id) {
-    const row = await UserModel.findByPk(id);
+    const row = await UserModel.findByPk(id, WITH_ROLES);
     return this.#toEntity(row);
   }
 
   async findByEmail(email) {
     const row = await UserModel.findOne({
       where: { email: email.toLowerCase().trim() },
+      ...WITH_ROLES,
     });
     return this.#toEntity(row);
   }
 
-  async findAllByRestaurant(
-    restaurantId,
-    { role, status, limit = 20, offset = 0 } = {},
-  ) {
-    const where = { restaurantId };
-    if (role) where.role = role;
-    if (status) where.status = status;
-
-    const { rows, count } = await UserModel.findAndCountAll({
-      where,
-      limit,
-      offset,
-      order: [["createdAt", "DESC"]],
-    });
-
-    return {
-      total: count,
-      users: rows.map((r) => this.#toEntity(r)),
-    };
-  }
-
-  async findAll({ role, status, limit = 20, offset = 0 } = {}) {
+  async findAll({ status, limit = 20, offset = 0 } = {}) {
     const where = {};
-    if (role) where.role = role;
     if (status) where.status = status;
 
     const { rows, count } = await UserModel.findAndCountAll({
       where,
       limit,
       offset,
-      order: [["createdAt", "DESC"]],
+      order:    [['createdAt', 'DESC']],
+      ...WITH_ROLES,
+      distinct: true,
     });
 
-    return {
-      count,
-      rows: rows.map((r) => this.#toEntity(r)),
-    };
+    return { count, rows: rows.map((r) => this.#toEntity(r)) };
   }
 
-  async findAllPlatformAdmins() {
+  async findAllByRestaurant(restaurantId, { status, limit = 20, offset = 0 } = {}) {
+    const where = { restaurantId };
+    if (status) where.status = status;
+
     const { rows, count } = await UserModel.findAndCountAll({
-      where: { restaurantId: null },
-      order: [["createdAt", "DESC"]],
+      where,
+      limit,
+      offset,
+      order:    [['createdAt', 'DESC']],
+      ...WITH_ROLES,
+      distinct: true,
     });
 
-    return {
-      total: count,
-      users: rows.map((r) => this.#toEntity(r)),
-    };
+    return { count, rows: rows.map((r) => this.#toEntity(r)) };
+  }
+
+  async findAllByBranch(branchId, { status, role, limit = 20, offset = 0 } = {}) {
+    const where = { branchId };
+    if (status)      where.status      = status;
+    if (role)        where.primaryRole = role;
+
+    const { rows, count } = await UserModel.findAndCountAll({
+      where,
+      limit,
+      offset,
+      order:    [['createdAt', 'DESC']],
+      ...WITH_ROLES,
+      distinct: true,
+    });
+
+    return { count, rows: rows.map((r) => this.#toEntity(r)) };
   }
 
   async create(userEntity) {
     const row = await UserModel.create({
-      id: userEntity.id,
-      firstName: userEntity.firstName,
-      lastName: userEntity.lastName,
-      email: userEntity.email,
-      phone: userEntity.phone,
-      passwordHash: userEntity.passwordHash,
-      role: userEntity.role,
-      status: userEntity.status,
-      restaurantId: userEntity.restaurantId,
+      id:              userEntity.id,
+      firstName:       userEntity.firstName,
+      lastName:        userEntity.lastName,
+      email:           userEntity.email,
+      phone:           userEntity.phone,
+      passwordHash:    userEntity.passwordHash,
+      primaryRole:     userEntity.primaryRole,
+      restaurantId:    userEntity.restaurantId,
+      branchId:        userEntity.branchId,
+      status:          userEntity.status,
       isEmailVerified: userEntity.isEmailVerified,
     });
-    return this.#toEntity(row);
+    return this.findById(row.id);
   }
 
   async update(id, fields) {
-    const [affectedRows] = await UserModel.update(fields, {
-      where: { id },
-    });
+    const allowed = [
+      'firstName', 'lastName', 'phone',
+      'primaryRole', 'restaurantId', 'branchId',
+      'status', 'isEmailVerified', 'passwordHash',
+    ];
+    const updates = {};
+    for (const key of allowed) {
+      if (fields[key] !== undefined) updates[key] = fields[key];
+    }
 
-    if (affectedRows === 0) return null;
-
-    const updated = await UserModel.findByPk(id);
-    return this.#toEntity(updated);
+    const [affected] = await UserModel.update(updates, { where: { id } });
+    if (affected === 0) return null;
+    return this.findById(id);
   }
 
   async delete(id) {
     const deleted = await UserModel.destroy({ where: { id } });
     return deleted > 0;
+  }
+
+  async hardDelete(id) {
+    const deleted = await UserModel.destroy({ where: { id }, force: true });
+    return deleted > 0;
+  }
+
+  async restore(id) {
+    await UserModel.restore({ where: { id } });
+    return this.findById(id);
   }
 
   async updateLastLogin(id) {

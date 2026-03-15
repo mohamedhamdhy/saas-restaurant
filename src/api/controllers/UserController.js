@@ -11,6 +11,7 @@ class UserController {
     updateUserProfile,
     changePassword,
     listUsers,
+    deleteUser,
   }) {
     this.registerFirstSuperAdmin = registerFirstSuperAdmin;
     this.createUser = createUser;
@@ -21,6 +22,8 @@ class UserController {
     this.updateUserProfile = updateUserProfile;
     this.changePassword = changePassword;
     this.listUsers = listUsers;
+    this.deleteUser = deleteUser;
+
     this.handleRegisterSuperAdmin = this.handleRegisterSuperAdmin.bind(this);
     this.handleCreateUser = this.handleCreateUser.bind(this);
     this.handleLogin = this.handleLogin.bind(this);
@@ -30,6 +33,7 @@ class UserController {
     this.handleUpdateProfile = this.handleUpdateProfile.bind(this);
     this.handleChangePassword = this.handleChangePassword.bind(this);
     this.handleListUsers = this.handleListUsers.bind(this);
+    this.handleDeleteUser = this.handleDeleteUser.bind(this);
   }
 
   async handleRegisterSuperAdmin(req, res, next) {
@@ -120,6 +124,17 @@ class UserController {
   async handleListUsers(req, res, next) {
     try {
       const result = await this.listUsers.execute(req.actor, req.query);
+      res.status(200).json({ success: true, data: result });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async handleDeleteUser(req, res, next) {
+    try {
+      const result = await this.deleteUser.execute(req.actor, {
+        targetUserId: req.params.id,
+      });
       res.status(200).json({ success: true, data: result });
     } catch (err) {
       next(err);

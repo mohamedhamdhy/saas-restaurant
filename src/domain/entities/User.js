@@ -9,79 +9,94 @@ class User {
     firstName,
     lastName,
     email,
-    phone,
+    phone = null,
     passwordHash,
-    role = UserRole.STAFF,
-    status = UserStatus.PENDING,
+    primaryRole = UserRole.STAFF,
     restaurantId = null,
+    branchId = null,
+    status = UserStatus.PENDING,
     isEmailVerified = false,
     lastLoginAt = null,
+    deletedAt = null,
     createdAt,
     updatedAt,
+    roles = [],
   }) {
-    if (role === UserRole.SUPERADMIN && restaurantId !== null) {
-      throw new Error("super_admin must not be scoped to a restaurant.");
-    }
-
-    if (role !== UserRole.SUPERADMIN && !restaurantId) {
-      throw new Error(`Role "${role}" must be assigned to a restaurant.`);
-    }
-
     this.id = id;
     this.firstName = firstName;
     this.lastName = lastName;
-    this.email = email ? email.toLowerCase().trim() : null;
+    this.email = email.toLowerCase().trim();
     this.phone = phone ?? null;
     this.passwordHash = passwordHash;
-    this.role = role;
-    this.status = status;
+    this.primaryRole = primaryRole;
     this.restaurantId = restaurantId;
+    this.branchId = branchId;
+    this.status = status;
     this.isEmailVerified = isEmailVerified;
     this.lastLoginAt = lastLoginAt;
+    this.deletedAt = deletedAt;
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
+    this.roles = roles;
   }
 
   get fullName() {
     return `${this.firstName} ${this.lastName}`;
   }
 
-  isSuperAdmin() {
-    return this.role === UserRole.SUPERADMIN;
-  }
-  isAdmin() {
-    return this.role === UserRole.ADMIN;
-  }
-  isManager() {
-    return this.role === UserRole.MANAGER;
-  }
-  isStaff() {
-    return this.role === UserRole.STAFF;
-  }
-
   isActive() {
     return this.status === UserStatus.ACTIVE;
   }
-  isPending() {
-    return this.status === UserStatus.PENDING;
+  isDeleted() {
+    return this.deletedAt !== null;
   }
 
-  isPlatformLevel() {
-    return this.isSuperAdmin() && !this.restaurantId;
+  isSuperAdmin() {
+    return this.primaryRole === UserRole.SUPER_ADMIN;
   }
 
-  isRestaurantLevel() {
-    return !!this.restaurantId;
+  isAdmin() {
+    return this.primaryRole === UserRole.ADMIN;
+  }
+
+  isAdminOf(restaurantId) {
+    return (
+      this.primaryRole === UserRole.ADMIN && this.restaurantId === restaurantId
+    );
+  }
+
+  isManagerOf(branchId) {
+    return this.primaryRole === UserRole.MANAGER && this.branchId === branchId;
+  }
+
+  hasRoleInBranch(branchId) {
+    return this.branchId === branchId;
+  }
+
+  hasRoleInRestaurant(restaurantId) {
+    return this.restaurantId === restaurantId;
   }
 
   creatableRoles() {
-    if (this.isSuperAdmin()) {
-      return Object.values(UserRole);
-    }
-    if (this.isAdmin()) {
-      return [UserRole.MANAGER, UserRole.STAFF];
-    }
+    if (this.isSuperAdmin()) return Object.values(UserRole);
+    if (this.isAdmin())
+      return [
+        UserRole.MANAGER,
+        UserRole.STAFF,
+        UserRole.CHEF,
+        UserRole.DELIVERY,
+      ];
     return [];
+  }
+
+  toTokenPayload() {
+    return {
+      sub: this.id,
+      primaryRole: this.primaryRole,
+      restaurantId: this.restaurantId,
+      branchId: this.branchId,
+      roles: this.roles.map((r) => r.role),
+    };
   }
 
   toPublicJSON() {
@@ -92,12 +107,15 @@ class User {
       fullName: this.fullName,
       email: this.email,
       phone: this.phone,
-      role: this.role,
-      status: this.status,
+      primaryRole: this.primaryRole,
       restaurantId: this.restaurantId,
+      branchId: this.branchId,
+      status: this.status,
       isEmailVerified: this.isEmailVerified,
       lastLoginAt: this.lastLoginAt,
+      deletedAt: this.deletedAt,
       createdAt: this.createdAt,
+      roles: this.roles.map((r) => (r.toPublicJSON ? r.toPublicJSON() : r)),
     };
   }
 }

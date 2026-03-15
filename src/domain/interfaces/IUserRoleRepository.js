@@ -10,6 +10,9 @@ class IUserRepository {
   async findAll(filters) {
     throw new Error("Not implemented");
   }
+  async findAllSuperAdmins() {
+    throw new Error("Not implemented");
+  }
   async findAllByRestaurant(restaurantId, filters) {
     throw new Error("Not implemented");
   }

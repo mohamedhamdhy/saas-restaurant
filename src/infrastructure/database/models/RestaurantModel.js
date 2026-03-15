@@ -63,7 +63,7 @@ RestaurantModel.init(
     },
     ownerId: {
       type: DataTypes.UUID,
-      allowNull: false,
+      allowNull: true,
     },
   },
   {

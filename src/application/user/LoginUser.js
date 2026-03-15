@@ -4,8 +4,8 @@ const crypto = require("crypto");
 const AppError = require("../../shared/errors/AppError");
 const CODES = require("../../shared/errors/ErrorCodes");
 const { comparePassword } = require("../../shared/utils/passwordUtils");
-const sendOtpEmail = require("../../infrastructure/mailer/SendOtpEmail");
-const sendOtpSms = require("../../infrastructure/sms/SendOtpSms");
+const sendOtpEmail = require("../../infrastructure/mailer/sendOtpEmail");
+const sendOtpSms = require("../../infrastructure/sms/sendOtpSms");
 const {
   generateOtp,
   OTP_TTL_SECONDS,

@@ -11,6 +11,7 @@
     "test": "jest --forceExit --detectOpenHandles",
     "migrate": "npx sequelize-cli db:migrate --config src/infrastructure/database/config/config.js --migrations-path src/infrastructure/database/migrations",
     "migrate:undo": "npx sequelize-cli db:migrate:undo --config src/infrastructure/database/config/config.js --migrations-path src/infrastructure/database/migrations",
+    "migrate:undo:all": "npx sequelize-cli db:migrate:undo:all --config src/infrastructure/database/config/config.js --migrations-path src/infrastructure/database/migrations",
     "seed": "npx sequelize-cli db:seed:all",
     "docker:build": "docker build -t restaurant-saas .",
     "docker:up": "docker-compose up -d",

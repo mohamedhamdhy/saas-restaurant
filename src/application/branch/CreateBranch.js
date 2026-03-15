@@ -2,7 +2,6 @@
 
 const { v4: uuidv4 } = require("uuid");
 const Branch = require("../../domain/entities/Branch");
-const BranchStatus = require("../../domain/enums/BranchStatus");
 const AppError = require("../../shared/errors/AppError");
 const CODES = require("../../shared/errors/ErrorCodes");
 
@@ -14,34 +13,37 @@ class CreateBranch {
 
   async execute(actor, dto) {
     const {
-      restaurantId,
       name,
-      description,
+      restaurantId,
       phone,
       email,
       address,
       city,
       country,
+      description,
       latitude,
       longitude,
       businessHours,
     } = dto;
 
-    if (!actor.isSuperAdmin() && !actor.isAdmin()) {
-      throw new AppError("Access denied.", 403, CODES.FORBIDDEN);
-    }
-
-    if (actor.isAdmin() && actor.restaurantId !== restaurantId) {
-      throw new AppError(
-        "You can only create branches for your own restaurant.",
-        403,
-        CODES.FORBIDDEN,
-      );
+    if (!actor.isSuperAdmin()) {
+      const isAdmin = actor.isAdminOf(restaurantId);
+      if (!isAdmin) {
+        throw new AppError(
+          "Only superAdmin or the restaurant admin can create branches.",
+          403,
+          CODES.FORBIDDEN,
+        );
+      }
     }
 
     const restaurant = await this.restaurantRepository.findById(restaurantId);
     if (!restaurant) {
-      throw new AppError("Restaurant not found.", 404, CODES.USER_NOT_FOUND);
+      throw new AppError(
+        "Restaurant not found. Create the restaurant first.",
+        404,
+        CODES.USER_NOT_FOUND,
+      );
     }
 
     const branch = new Branch({
@@ -57,7 +59,6 @@ class CreateBranch {
       latitude: latitude ?? null,
       longitude: longitude ?? null,
       businessHours: businessHours ?? null,
-      status: BranchStatus.ACTIVE,
     });
 
     const created = await this.branchRepository.create(branch);

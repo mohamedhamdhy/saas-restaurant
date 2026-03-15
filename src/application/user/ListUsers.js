@@ -10,22 +10,44 @@ class ListUsers {
 
   async execute(
     actor,
-    { restaurantId, role, status, page = 1, limit = 20 } = {},
+    { restaurantId, branchId, role, status, page = 1, limit = 20 } = {},
   ) {
-    if (!actor.isSuperAdmin() && !actor.isAdmin()) {
-      throw new AppError("Access denied.", 403, CODES.FORBIDDEN);
-    }
-
     const offset = (page - 1) * limit;
 
-    if (actor.isSuperAdmin() && !restaurantId) {
+    if (actor.isSuperAdmin()) {
+      if (branchId) {
+        const result = await this.userRepository.findAllByBranch(branchId, {
+          role,
+          status,
+          limit,
+          offset,
+        });
+        return {
+          total: result.count,
+          page,
+          limit,
+          users: result.rows.map((u) => u.toPublicJSON()),
+        };
+      }
+
+      if (restaurantId) {
+        const result = await this.userRepository.findAllByRestaurant(
+          restaurantId,
+          { status, limit, offset },
+        );
+        return {
+          total: result.count,
+          page,
+          limit,
+          users: result.rows.map((u) => u.toPublicJSON()),
+        };
+      }
+
       const result = await this.userRepository.findAll({
-        role,
         status,
         limit,
         offset,
       });
-
       return {
         total: result.count,
         page,
@@ -34,21 +56,53 @@ class ListUsers {
       };
     }
 
-    const scopedRestaurantId = actor.isSuperAdmin()
-      ? restaurantId
-      : actor.restaurantId;
+    const adminRole = actor.roles.find((r) => r.role === "admin");
+    if (adminRole) {
+      const scopedRestaurantId = restaurantId || adminRole.restaurantId;
+      if (branchId) {
+        const result = await this.userRepository.findAllByBranch(branchId, {
+          role,
+          status,
+          limit,
+          offset,
+        });
+        return {
+          total: result.count,
+          page,
+          limit,
+          users: result.rows.map((u) => u.toPublicJSON()),
+        };
+      }
+      const result = await this.userRepository.findAllByRestaurant(
+        scopedRestaurantId,
+        { status, limit, offset },
+      );
+      return {
+        total: result.count,
+        page,
+        limit,
+        users: result.rows.map((u) => u.toPublicJSON()),
+      };
+    }
 
-    const result = await this.userRepository.findAllByRestaurant(
-      scopedRestaurantId,
-      { role, status, limit, offset },
-    );
+    const managerRole = actor.roles.find((r) => r.role === "manager");
+    if (managerRole) {
+      const scopedBranchId = branchId || managerRole.branchId;
+      const result = await this.userRepository.findAllByBranch(scopedBranchId, {
+        role,
+        status,
+        limit,
+        offset,
+      });
+      return {
+        total: result.count,
+        page,
+        limit,
+        users: result.rows.map((u) => u.toPublicJSON()),
+      };
+    }
 
-    return {
-      total: result.total,
-      page,
-      limit,
-      users: result.users.map((u) => u.toPublicJSON()),
-    };
+    throw new AppError("Access denied.", 403, CODES.FORBIDDEN);
   }
 }
 

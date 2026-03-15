@@ -3,7 +3,8 @@
 module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.sequelize.query(
-      `CREATE TYPE "enum_restaurants_status" AS ENUM ('active','inactive','suspended','pendingApproval');`,
+      `CREATE TYPE "enum_restaurants_status" AS ENUM
+       ('active', 'inactive', 'suspended', 'pendingApproval');`,
     );
 
     await queryInterface.createTable("restaurants", {
@@ -13,30 +14,38 @@ module.exports = {
         primaryKey: true,
         allowNull: false,
       },
+
       name: {
-        type: Sequelize.STRING(150),
+        type: Sequelize.STRING(200),
         allowNull: false,
       },
+
       description: {
         type: Sequelize.TEXT,
         allowNull: true,
       },
+
       logoUrl: {
         type: Sequelize.STRING(500),
         allowNull: true,
       },
-      phone: {
-        type: Sequelize.STRING(20),
-        allowNull: true,
-      },
-      email: {
-        type: Sequelize.STRING(255),
-        allowNull: true,
-      },
+
       website: {
         type: Sequelize.STRING(500),
         allowNull: true,
       },
+
+      email: {
+        type: Sequelize.STRING(255),
+        allowNull: false,
+        unique: true,
+      },
+
+      phone: {
+        type: Sequelize.STRING(20),
+        allowNull: true,
+      },
+
       status: {
         type: Sequelize.ENUM(
           "active",
@@ -47,26 +56,31 @@ module.exports = {
         allowNull: false,
         defaultValue: "pendingApproval",
       },
+
       ownerId: {
         type: Sequelize.UUID,
-        allowNull: false,
+        allowNull: true,
       },
+
+      deletedAt: {
+        type: Sequelize.DATE,
+        allowNull: true,
+      },
+
       createdAt: {
         type: Sequelize.DATE,
         allowNull: false,
         defaultValue: Sequelize.literal("NOW()"),
       },
+
       updatedAt: {
         type: Sequelize.DATE,
         allowNull: false,
         defaultValue: Sequelize.literal("NOW()"),
       },
-      deletedAt: {
-        type: Sequelize.DATE,
-        allowNull: true,
-      },
     });
 
+    await queryInterface.addIndex("restaurants", ["email"], { unique: true });
     await queryInterface.addIndex("restaurants", ["status"]);
     await queryInterface.addIndex("restaurants", ["ownerId"]);
   },

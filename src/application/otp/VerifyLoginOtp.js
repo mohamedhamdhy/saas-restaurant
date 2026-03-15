@@ -66,12 +66,7 @@ class VerifyLoginOtp {
       );
     }
 
-    const tokenPayload = {
-      sub: user.id,
-      role: user.role,
-      restaurantId: user.restaurantId,
-    };
-
+    const tokenPayload = user.toTokenPayload();
     const accessToken = generateAccessToken(tokenPayload);
     const refreshToken = generateRefreshToken({ sub: user.id });
 

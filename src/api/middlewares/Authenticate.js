@@ -13,13 +13,13 @@ const authenticate = (userRepository) => async (req, res, next) => {
 
     const token = authHeader.split(" ")[1];
     const decoded = verifyAccessToken(token);
+
     req.tokenPayload = decoded;
 
     const user = await userRepository.findById(decoded.sub);
     if (!user) {
       throw new AppError("User not found.", 401, CODES.UNAUTHORIZED);
     }
-
     if (!user.isActive()) {
       throw new AppError(
         `Account is ${user.status}.`,
@@ -29,7 +29,6 @@ const authenticate = (userRepository) => async (req, res, next) => {
     }
 
     req.actor = user;
-
     next();
   } catch (err) {
     next(err);

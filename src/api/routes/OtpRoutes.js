@@ -13,7 +13,7 @@ const {
 } = require("../validators/OtpValidator");
 
 const otpLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+  windowMs: 1 * 60 * 1000,
   max: 10,
   message: {
     success: false,

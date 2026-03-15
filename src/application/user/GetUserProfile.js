@@ -2,7 +2,6 @@
 
 const AppError = require("../../shared/errors/AppError");
 const CODES = require("../../shared/errors/ErrorCodes");
-const UserRole = require("../../domain/enums/UserRole");
 
 class GetUserProfile {
   constructor({ userRepository }) {
@@ -15,18 +14,25 @@ class GetUserProfile {
       throw new AppError("User not found.", 404, CODES.USER_NOT_FOUND);
     }
 
-    if (actor.isSuperAdmin()) {
-    } else if (actor.isAdmin() || actor.isManager()) {
-      if (target.restaurantId !== actor.restaurantId) {
-        throw new AppError("Access denied.", 403, CODES.FORBIDDEN);
-      }
-    } else {
-      if (target.id !== actor.id) {
-        throw new AppError("Access denied.", 403, CODES.FORBIDDEN);
-      }
-    }
+    if (actor.isSuperAdmin()) return target.toPublicJSON();
 
-    return target.toPublicJSON();
+    const actorRestaurantIds = actor.roles
+      .filter((r) => r.restaurantId)
+      .map((r) => r.restaurantId);
+
+    const targetRestaurantIds = target.roles
+      .filter((r) => r.restaurantId)
+      .map((r) => r.restaurantId);
+
+    const sharedRestaurant = actorRestaurantIds.some((id) =>
+      targetRestaurantIds.includes(id),
+    );
+
+    if (actor.id === target.id) return target.toPublicJSON();
+
+    if (sharedRestaurant) return target.toPublicJSON();
+
+    throw new AppError("Access denied.", 403, CODES.FORBIDDEN);
   }
 }
 
