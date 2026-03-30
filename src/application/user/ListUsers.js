@@ -1,7 +1,7 @@
 "use strict";
 
 const AppError = require("../../shared/errors/AppError");
-const CODES = require("../../shared/errors/ErrorCodes");
+const CODES = require("../../shared/errors/errorCodes");
 
 class ListUsers {
   constructor({ userRepository }) {
@@ -14,6 +14,7 @@ class ListUsers {
   ) {
     const offset = (page - 1) * limit;
 
+    // ── superAdmin → sees everything ───────────────────
     if (actor.isSuperAdmin()) {
       if (branchId) {
         const result = await this.userRepository.findAllByBranch(branchId, {
@@ -29,7 +30,6 @@ class ListUsers {
           users: result.rows.map((u) => u.toPublicJSON()),
         };
       }
-
       if (restaurantId) {
         const result = await this.userRepository.findAllByRestaurant(
           restaurantId,
@@ -42,7 +42,6 @@ class ListUsers {
           users: result.rows.map((u) => u.toPublicJSON()),
         };
       }
-
       const result = await this.userRepository.findAll({
         status,
         limit,
@@ -56,9 +55,11 @@ class ListUsers {
       };
     }
 
-    const adminRole = actor.roles.find((r) => r.role === "admin");
-    if (adminRole) {
-      const scopedRestaurantId = restaurantId || adminRole.restaurantId;
+    // ── admin → scoped to their restaurant ─────────────
+    // restaurantId is now directly on actor, not in roles[]
+    if (actor.primaryRole === "admin" && actor.restaurantId) {
+      const scopedRestaurantId = restaurantId || actor.restaurantId;
+
       if (branchId) {
         const result = await this.userRepository.findAllByBranch(branchId, {
           role,
@@ -73,6 +74,7 @@ class ListUsers {
           users: result.rows.map((u) => u.toPublicJSON()),
         };
       }
+
       const result = await this.userRepository.findAllByRestaurant(
         scopedRestaurantId,
         { status, limit, offset },
@@ -85,9 +87,9 @@ class ListUsers {
       };
     }
 
-    const managerRole = actor.roles.find((r) => r.role === "manager");
-    if (managerRole) {
-      const scopedBranchId = branchId || managerRole.branchId;
+    // ── manager → scoped to their branch ───────────────
+    if (actor.primaryRole === "manager" && actor.branchId) {
+      const scopedBranchId = branchId || actor.branchId;
       const result = await this.userRepository.findAllByBranch(scopedBranchId, {
         role,
         status,
